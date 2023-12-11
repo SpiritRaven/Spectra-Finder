@@ -14,7 +14,7 @@ spectrometerMax = 0.95
 
 print("Oversaturated peaks:", end = " ")
 
-with open('Mercury.txt') as f:
+with open('Near Sun.txt') as f:
     for i in range(7):
         next(f)
         
@@ -49,18 +49,32 @@ while count < len(y) :
 
 
 # Noise threshold, this value dictates how large a difference is needed between two points for it to 
-# count as a peak by the program
-noiseDif = 0.0009
+# count as a peak or dip by the program
+
+# If you only want to detect for one of these then increase the noise difference number to 1 for the one you don't want detected.
+noiseDifEmission = 0.0009
+noiseDifAbsorption = 0.0009
+
+# Number of digits to round to for each intensity coordinate
+digits = 4
 
 
-count = 1
 
-xList = []
-yList = []
+xListE = []
+yListE = []
+
+xListA = []
+yListA = []
+
+formatter = '{:.' + '{}'.format(digits) + 'f}'
 
 print("\n")
+print("Inaccurate peaks:", end = "\n\n")
 
-# Find peaks 
+# Find peaks
+noiseDif = noiseDifEmission
+ 
+count = 1
 while count < len(y)-1 :
     
     leftDif = y[count]-y[count-1]
@@ -68,24 +82,66 @@ while count < len(y)-1 :
     
 
     if leftDif > noiseDif and rightDif > noiseDif :
-        yList.append(y[count])
-        xList.append(x[count])
+        yListE.append(y[count])
+        xListE.append(x[count])
         
     # This elif checks to see if either the left point difference or right point difference satisfies the noiseDif but
     # not both of them. Some peaks were inaccurate because they had two points close together at the top of the peak.
     # This might happen since the actual peak was right between the two points.
     elif (leftDif > noiseDif or rightDif > noiseDif) :
         if(leftDif >= 0 and rightDif >= 0) :
-            print(str(x[count]) + " " + str(y[count]) + " Satisfies the condition for a peak but is inaccurate\n")
+            print("    " + str(x[count]) + " & " + str(formatter.format(y[count])) + "\\\\")
 
     count += 1
-    
+
 # Print results
+print("\n", end = "")
+print("Well defined emission lines determined by noise threshold:", end = "\n\n")
+
 count = 0
-while count < len(yList) :
+while count < len(yListE) :
     
-    print("    " + str(xList[count]) + " & " + str(round(yList[count],4)) + "\\\\")
+    print("    " + str(xListE[count]) + " & " + str(formatter.format(yListE[count])) + "\\\\")
     
     count += 1
+
+print("\n", end = "")
+print("Inaccurate dips:", end = "\n\n")
+# Find dips
+noiseDif = noiseDifAbsorption
+
+count = 1
+while count < len(y)-1 :
+    
+    dipLen = 0
+    
+    leftDif = y[count-1]-y[count]
+    rightDif = y[count+1]-y[count]
+    
+    dipLen = (leftDif + rightDif) / 2
+
+    if leftDif > noiseDif and rightDif > noiseDif :
+        yListA.append(dipLen)
+        xListA.append(x[count])
+        
+        
+    elif (leftDif > noiseDif or rightDif > noiseDif) :
+        if(leftDif >= 0 and rightDif >= 0) :
+            print("    " + str(x[count]) + " & " + str(formatter.format(dipLen)) + "\\\\")
+
+    count += 1
+
+# Print results
+print("\n", end = "")
+print("Absorption dips are measured by the average change in intensity between the dip point and the two adjacent points")
+print("Well defined absorption dips determined by noise threshold:", end = "\n\n")
+
+count = 0
+while count < len(yListA) :
+    
+    print("    " + str(xListA[count]) + " & " + str(formatter.format(yListA[count])) + "\\\\")
+    
+    count += 1
+
     
     
